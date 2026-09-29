@@ -5,7 +5,8 @@ import bcrypt from 'bcryptjs';
 import { getSupabase, isSupabaseReady } from '../config/supabase.js';
 
 // Local resilient JSON store path for offline development or before Supabase credentials are input
-const DATA_DIR = path.resolve('data');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = isServerless ? '/tmp/trustguard_data' : path.resolve('data');
 const STORE_PATH = path.join(DATA_DIR, 'store.json');
 
 // In-memory cache synced with store.json
@@ -18,20 +19,20 @@ let localStore = {
   security_events: []
 };
 
-// Initialize initial seed data in local store
+// Initialize initial seed data in local store safely
 function initLocalStore() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
 
-  if (fs.existsSync(STORE_PATH)) {
-    try {
+    if (fs.existsSync(STORE_PATH)) {
       const raw = fs.readFileSync(STORE_PATH, 'utf-8');
       localStore = JSON.parse(raw);
       return;
-    } catch (e) {
-      console.warn('⚠️ Could not parse existing store.json, reinitializing default seed.');
     }
+  } catch (e) {
+    console.warn('ℹ️ Running local store in memory-only mode:', e.message);
   }
 
   // Pre-seed demo user
