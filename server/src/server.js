@@ -52,9 +52,10 @@ app.use('/api/profile', profileRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Start server
-const server = app.listen(config.port, () => {
-  console.log(`
+// Start server only when run directly (not as serverless function)
+if (!process.env.VERCEL) {
+  app.listen(config.port, () => {
+    console.log(`
 🛡️  ======================================================
 🛡️   TRUSTGUARD AI BACKEND STARTED
 🛡️   Port: ${config.port}
@@ -62,7 +63,8 @@ const server = app.listen(config.port, () => {
 🛡️   Database: ${config.isSupabaseConfigured ? 'Supabase PostgreSQL' : 'Local Resilient Engine (Pre-seeded with demo account)'}
 🛡️   AI Engine: ${config.isGeminiConfigured ? 'Google Gemini API (' + config.geminiModel + ')' : 'Heuristic Cybersecurity Engine (Demo Mode)'}
 🛡️  ======================================================
-  `);
-});
+    `);
+  });
+}
 
 export default app;
